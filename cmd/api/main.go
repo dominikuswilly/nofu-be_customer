@@ -1,54 +1,74 @@
 package main
 
 import (
-    "log"
-    "os"
-    "fmt"
-    stdhttp "net/http" 
     "database/sql"
-    
-    _ "github.com/jackc/pgx/v5/stdlib"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
 
+    _ "github.com/jackc/pgx/v5/stdlib"
+    "github.com/joho/godotenv"
     "github.com/gorilla/mux"
+
     handler "be_customer/internal/delivery/http"
     "be_customer/internal/repository"
     "be_customer/internal/usecase"
-
-     "github.com/joho/godotenv"
-
 )
 
 func main() {
-    if err := godotenv.Load(); err != nil {
-        log.Println("No .env file found, using system environment variables")
+    // Load .env — optional
+    _ = godotenv.Load()
+
+    // Load required environment variables
+    requiredVars := []string{
+        "DB_USER", "DB_PASSWORD", "DB_HOST", "DB_PORT",
+        "DB_NAME", "DB_SSLMODE", "SERVER_PORT",
     }
 
-    user := os.Getenv("DB_USER")
-    password := os.Getenv("DB_PASSWORD")
-    host := os.Getenv("DB_HOST")
-    port := os.Getenv("DB_PORT")
-    name := os.Getenv("DB_NAME")
-    ssl := os.Getenv("DB_SSLMODE")
-    serverPort := os.Getenv("SERVER_PORT")
+    for _, key := range requiredVars {
+        if os.Getenv(key) == "" {
+            log.Fatalf("Missing required environment variable: %s", key)
+        }
+    }
 
-    dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s",
-        user, password, host, port, name, ssl)
+    // Build DSN string
+    dsn := fmt.Sprintf(
+        "postgres://%s:%s@%s:%s/%s?sslmode=%s",
+        os.Getenv("DB_USER"),
+        os.Getenv("DB_PASSWORD"),
+        os.Getenv("DB_HOST"),
+        os.Getenv("DB_PORT"),
+        os.Getenv("DB_NAME"),
+        os.Getenv("DB_SSLMODE"),
+    )
 
-    // 3️⃣ Connect to PostgreSQL
+    // Connect to PostgreSQL
     db, err := sql.Open("pgx", dsn)
     if err != nil {
-        log.Fatal(err)
+        log.Fatalf("Failed to connect database: %v", err)
     }
     defer db.Close()
 
+    // Check actual DB connection
+    if err := db.Ping(); err != nil {
+        log.Fatalf("Database ping failed: %v", err)
+    }
+
+    // Router
     r := mux.NewRouter()
 
-    // DI (dependency injection)
+    // Dependency injection
     repo := repository.NewMerchantRepoPG(db)
-    usecase := usecase.NewMerchantUsecase(repo)
+    uc := usecase.NewMerchantUsecase(repo)
 
-    handler.NewMerchantHandler(r, usecase)
+    // HTTP handlers
+    handler.NewMerchantHandler(r, uc)
 
-    log.Println("Server running at port", serverPort)
-    stdhttp.ListenAndServe(":"+serverPort, r)
+    port := os.Getenv("SERVER_PORT")
+    log.Println("🚀 Server running on port", port)
+
+    if err := http.ListenAndServe(":"+port, r); err != nil {
+        log.Fatalf("Server failed: %v", err)
+    }
 }
