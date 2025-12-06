@@ -59,11 +59,14 @@ func main() {
     r := mux.NewRouter()
 
     // Dependency injection
-    repo := repository.NewMerchantRepoPG(db)
-    uc := usecase.NewMerchantUsecase(repo)
+    merchantRepo := repository.NewMerchantRepoPG(db)
+    adminRepo := repository.NewAdminRepoPG(db)
+    merchantUc := usecase.NewMerchantUsecase(merchantRepo)
+    adminUc := usecase.NewAdminUsecase(adminRepo)
 
     // HTTP handlers
-    handler.NewMerchantHandler(r, uc)
+    handler.NewMerchantHandler(r, merchantUc)
+    handler.NewAdminHandler(r, adminUc)
 
     port := os.Getenv("SERVER_PORT")
     log.Println("🚀 Server running on port", port)
