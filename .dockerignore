@@ -1,0 +1,28 @@
+# Ignore Go build artifacts
+bin/
+*.exe
+*.test
+
+# Ignore Go modules cache
+vendor/
+Gopkg.lock
+
+# Ignore IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore Git
+.git
+.gitignore
+
+# Ignore environment/config files
+.env
+
+# Ignore logs
+logs/
+
+# Ignore temporary files
+*.tmp
+*.log

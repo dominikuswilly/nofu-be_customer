@@ -1,0 +1,39 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+server           # if your built binary is named "server"
+
+# Test binaries
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Vendor directory (if using vendoring)
+vendor/
+
+# Go modules
+go.sum
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+
+# Temporary files
+*.tmp
