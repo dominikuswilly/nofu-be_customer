@@ -1,0 +1,43 @@
+{
+    // --- Go tool settings ---
+    "go.useLanguageServer": true,
+    "go.languageServerFlags": [
+        "-rpc.trace",
+        "serve"
+    ],
+    "go.gopath": "",
+    "go.formatTool": "goimports",
+    "go.lintTool": "golangci-lint",
+    "go.lintFlags": ["--fast"],
+    "go.vetOnSave": "package",
+    "go.buildOnSave": "package",
+    "go.testOnSave": false,
+    "go.useCodeSnippetsOnFunctionSuggest": true,
+
+    // --- Editor settings ---
+    "editor.formatOnSave": true,
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+
+    // --- gopls settings ---
+    "gopls": {
+        "usePlaceholders": true,            // show function placeholders when completing
+        "completeUnimported": true,         // auto suggest imports
+        "analyses": {
+            "unusedparams": true,           // warn on unused params
+            "unusedwrite": true,            // warn on unused writes
+            "nilness": true,
+            "shadow": true
+        },
+        "staticcheck": true
+    },
+
+    // --- Terminal and formatting ---
+    "terminal.integrated.inheritEnv": true,
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true
+}
