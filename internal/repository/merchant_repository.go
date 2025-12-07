@@ -8,7 +8,6 @@ import (
 	"database/sql"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"golang.org/x/crypto/bcrypt"
 
 	"be_customer/internal/domain"
 
@@ -30,15 +29,9 @@ func (r *MerchantRepoPG) Create(u *domain.Merchant) error {
 	}
 	u.C_ID = strings.ReplaceAll(v7.String(), "-", "")
 
-	// Hash the plaintext password before storing
-	hashedPw, err := bcrypt.GenerateFromPassword([]byte(u.C_PASSWORD), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
 	_, err = r.db.Exec(
 		`INSERT INTO merchant_master (c_id, c_nm, c_email, c_phone, c_username, c_password) VALUES ($1, $2, $3, $4, $5, $6)`,
-		u.C_ID, u.C_NM, u.C_EMAIL, u.C_PHONE, u.C_USERNAME, string(hashedPw),
+		u.C_ID, u.C_NM, u.C_EMAIL, u.C_PHONE, u.C_USERNAME, u.C_PASSWORD,
 	)
 	return err
 }
