@@ -3,12 +3,16 @@ package http
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"be_customer/internal/domain"
 	"be_customer/internal/usecase"
 
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -20,6 +24,38 @@ type MerchantHandler struct {
 type loginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type loginResponseData struct {
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	User      struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Username string `json:"username"`
+	} `json:"user"`
+}
+
+type resGetMerchant struct {
+	ResponseCode    string      `json:"responseCode"`
+	ResponseMessage string      `json:"responseMessage"`
+	Data            interface{} `json:"data"`
+}
+
+type itemMerchant struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}
+
+type itemDetailMerchant struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Phone    string `json:"phone"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 func NewMerchantHandler(r *mux.Router, u *usecase.MerchantUsecase) {
@@ -55,8 +91,6 @@ func (h *MerchantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(pwBytes)
-	log.Println(bcrypt.DefaultCost)
 	hashed, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -104,17 +138,80 @@ func (h *MerchantHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *MerchantHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	merchants, _ := h.usecase.GetAll()
-	json.NewEncoder(w).Encode(merchants)
+	resp := make([]itemMerchant, 0, len(merchants))
+	for _, m := range merchants {
+		var phone, email string
+		if m.C_PHONE != nil {
+			phone = *m.C_PHONE
+		}
+		if m.C_EMAIL != nil {
+			email = *m.C_EMAIL
+		}
+		resp = append(resp, itemMerchant{
+			ID:       m.C_ID,
+			Name:     m.C_NM,
+			Phone:    phone,
+			Email:    email,
+			Username: m.C_USERNAME,
+		})
+	}
+
+	out := resGetMerchant{
+		ResponseCode:    "200",
+		ResponseMessage: "success",
+		Data:            resp,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(out); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	}
 }
 
 func (h *MerchantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
 	merchant, err := h.usecase.GetByID(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		out := resGetMerchant{
+			ResponseCode:    "404",
+			ResponseMessage: "merchant not found",
+			Data:            nil,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(out)
 		return
 	}
-	json.NewEncoder(w).Encode(merchant)
+
+	// Safely extract optional fields
+	var phone, email string
+	if merchant.C_PHONE != nil {
+		phone = *merchant.C_PHONE
+	}
+	if merchant.C_EMAIL != nil {
+		email = *merchant.C_EMAIL
+	}
+
+	// Convert ID to string (works even if C_ID is numeric)
+	item := itemDetailMerchant{
+		ID:       fmt.Sprintf("%v", merchant.C_ID),
+		Name:     merchant.C_NM,
+		Phone:    phone,
+		Email:    email,
+		Username: merchant.C_USERNAME,
+	}
+
+	out := resGetMerchant{
+		ResponseCode:    "200",
+		ResponseMessage: "success",
+		Data:            item,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(out)
 }
 
 func (h *MerchantHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +223,7 @@ func (h *MerchantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(merchant)
 }
 
@@ -174,24 +272,43 @@ func (h *MerchantHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate JWT
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		http.Error(w, "server misconfiguration", http.StatusInternalServerError)
+		return
+	}
+
+	expiresAt := time.Now().Add(1 * time.Hour)
+	claims := jwt.MapClaims{
+		"sub":      merchant.C_ID,
+		"username": merchant.C_USERNAME,
+		"exp":      expiresAt.Unix(),
+		"iat":      time.Now().Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		http.Error(w, "failed to create token", http.StatusInternalServerError)
+		return
+	}
+
+	// Build response (do NOT include password)
+	var data loginResponseData
+	data.Token = signedToken
+	data.ExpiresAt = expiresAt
+	data.User.Name = merchant.C_NM
+	data.User.Email = *merchant.C_EMAIL
+	data.User.Username = merchant.C_USERNAME
+
 	resp := struct {
-		ResponseCode    string      `json:"responseCode"`
-		ResponseMessage string      `json:"responseMessage"`
-		Data            interface{} `json:"data"`
+		ResponseCode    string            `json:"responseCode"`
+		ResponseMessage string            `json:"responseMessage"`
+		Data            loginResponseData `json:"data"`
 	}{
 		ResponseCode:    "200",
-		ResponseMessage: "success",
-		Data: struct {
-			Name     string  `json:"name"`
-			Phone    *string `json:"phone"`
-			Email    *string `json:"email"`
-			Username string  `json:"username"`
-		}{
-			Name:     merchant.C_NM,
-			Phone:    merchant.C_PHONE,
-			Email:    merchant.C_EMAIL,
-			Username: merchant.C_USERNAME,
-		},
+		ResponseMessage: "login success",
+		Data:            data,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
