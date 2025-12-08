@@ -38,12 +38,6 @@ type loginResponseData struct {
 	} `json:"user"`
 }
 
-type resGetMerchant struct {
-	ResponseCode    string      `json:"responseCode"`
-	ResponseMessage string      `json:"responseMessage"`
-	Data            interface{} `json:"data"`
-}
-
 type apiResp struct {
 	ResponseCode    string      `json:"responseCode"`
 	ResponseMessage string      `json:"responseMessage"`
