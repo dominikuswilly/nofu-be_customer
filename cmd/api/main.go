@@ -17,7 +17,8 @@ import (
 	"github.com/joho/godotenv"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 
-	handler "be_customer/internal/delivery/http"
+	handlerAdmin "be_customer/internal/delivery/http"
+	handlerMerchant "be_customer/internal/delivery/http/merchant"
 	"be_customer/internal/repository"
 	"be_customer/internal/usecase"
 
@@ -104,8 +105,8 @@ func main() {
 	adminUc := usecase.NewAdminUsecase(adminRepo)
 
 	// HTTP handlers
-	handler.NewMerchantHandler(r, merchantUc)
-	handler.NewAdminHandler(r, adminUc)
+	handlerMerchant.NewMerchantHandler(r, merchantUc)
+	handlerAdmin.NewAdminHandler(r, adminUc)
 
 	port := os.Getenv("SERVER_PORT")
 	log.Println("🚀 Server running on port", port)

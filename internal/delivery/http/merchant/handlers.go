@@ -1,9 +1,10 @@
-package http
+package merchant
 
 import (
+	"be_customer/internal/domain"
+	"be_customer/internal/usecase"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,53 +12,13 @@ import (
 	"strings"
 	"time"
 
-	"be_customer/internal/domain"
-	"be_customer/internal/usecase"
-
-	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type MerchantHandler struct {
 	usecase *usecase.MerchantUsecase
-}
-
-type loginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type loginResponseData struct {
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expiresAt"`
-	User      struct {
-		Name     string `json:"name"`
-		Email    string `json:"email"`
-		Username string `json:"username"`
-	} `json:"user"`
-}
-
-type apiResp struct {
-	ResponseCode    string      `json:"responseCode"`
-	ResponseMessage string      `json:"responseMessage"`
-	Data            interface{} `json:"data"`
-}
-
-type itemMerchant struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Username string `json:"username,omitempty"`
-}
-
-type itemDetailMerchant struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Phone    string `json:"phone,omitempty"`
-	Email    string `json:"email,omitempty"`
-	Username string `json:"username,omitempty"`
 }
 
 // NewMerchantHandler registers routes under /api
@@ -72,24 +33,6 @@ func NewMerchantHandler(r *mux.Router, u *usecase.MerchantUsecase) {
 	api.HandleFunc("/merchants/{id}", handler.Delete).Methods(http.MethodDelete)
 	api.HandleFunc("/merchants/login", handler.Login).Methods(http.MethodPost)
 }
-
-/* ---------- helpers ---------- */
-
-func writeJSON(w http.ResponseWriter, status int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v) // intentionally ignore encode error; caller can add logging
-}
-
-func writeError(w http.ResponseWriter, status int, msg string) {
-	writeJSON(w, status, apiResp{
-		ResponseCode:    fmt.Sprintf("%d", status),
-		ResponseMessage: msg,
-		Data:            nil,
-	})
-}
-
-/* ---------- handlers ---------- */
 
 func (h *MerchantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -316,17 +259,3 @@ func (h *MerchantHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Data:            userData,
 	})
 }
-
-/* ---------- utility ---------- */
-
-func derefString(ptr *string) string {
-	if ptr == nil {
-		return ""
-	}
-	return *ptr
-}
-
-/* ---------- errors ---------- */
-
-// optional: helper to standardize internal errors (example)
-var ErrNotFound = errors.New("not found")
