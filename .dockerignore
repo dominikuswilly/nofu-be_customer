@@ -17,8 +17,6 @@ Gopkg.lock
 .git
 .gitignore
 
-# Ignore environment/config files
-.env
 
 # Ignore logs
 logs/
