@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nofu-be_customer:1.0.0
+    image: app.netbird.cloud:8081/customer/stable:1.0.0
     env_file:
       - .env
     ports:

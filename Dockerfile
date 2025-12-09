@@ -1,36 +1,39 @@
+# syntax=docker/dockerfile:1
 # ============================
-# 1️⃣ Build Stage
+# 1️⃣ Build Stage (arm64)
 # ============================
-FROM golang:1.25-alpine AS builder
+FROM --platform=linux/arm64 golang:1.25-alpine AS builder
 
 WORKDIR /app
 
 # Install git for Go modules
 RUN apk add --no-cache git
 
-# Copy modules first
+# Copy modules first to leverage cache
 COPY go.mod go.sum ./
-RUN go mod download
+RUN go env -w GOPROXY=https://proxy.golang.org,direct && go mod download
 
 # Copy entire project
 COPY . .
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o main cmd/api/main.go
-
+# Build static arm64 binary
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -ldflags="-s -w" -o /app/main cmd/api/main.go
 
 # ============================
-# 2️⃣ Run Stage
+# 2️⃣ Run Stage (arm64)
 # ============================
-FROM alpine:latest
+FROM --platform=linux/amd64 alpine:latest
 
 WORKDIR /app
 
+# Copy binary from builder
 COPY --from=builder /app/main .
 
-# Copy .env if needed
+# Optional: copy .env if you need it in image
 COPY .env .env
 
 EXPOSE 8080
 
-CMD ["./main"]
+# Use exec form so signals are delivered to your process
+ENTRYPOINT ["/app/main"]
