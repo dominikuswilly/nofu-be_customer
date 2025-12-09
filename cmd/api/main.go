@@ -54,13 +54,13 @@ func main() {
 	// start compressor goroutine that gzips rotated files
 	go compressRotatedFiles(".", "app.log.", 1*time.Minute)
 
-	log.SetOutput(&lumberjack.Logger{
+	log.SetOutput(io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   "logs/app.log",
 		MaxSize:    20, // MB
 		MaxBackups: 7,
 		MaxAge:     1, // days (rotate daily)
 		Compress:   true,
-	})
+	}))
 
 	for _, key := range requiredVars {
 		if os.Getenv(key) == "" {
