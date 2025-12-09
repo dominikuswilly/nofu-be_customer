@@ -2,7 +2,7 @@
 # ============================
 # 1️⃣ Build Stage (arm64)
 # ============================
-FROM --platform=linux/arm64 golang:1.25-alpine AS builder
+FROM --platform=linux/amd64 golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -16,12 +16,12 @@ RUN go env -w GOPROXY=https://proxy.golang.org,direct && go mod download
 # Copy entire project
 COPY . .
 
-# Build static arm64 binary
+# Build static amd64 binary
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 RUN go build -ldflags="-s -w" -o /app/main cmd/api/main.go
 
 # ============================
-# 2️⃣ Run Stage (arm64)
+# 2️⃣ Run Stage (amd64)
 # ============================
 FROM --platform=linux/amd64 alpine:latest
 
