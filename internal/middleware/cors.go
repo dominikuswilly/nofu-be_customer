@@ -6,9 +6,9 @@ import (
 
 func CORSMiddleware(next http.Handler) http.Handler {
 	allowedOrigins := map[string]bool{
-		"http://localhost:8080":          true,
-		"https://app.netbird.cloud:8090": true,
-		"http://app.netbird.cloud:8090":  true,
+		"http://localhost:8080": true,
+		// "https://app.netbird.cloud:8090": true,
+		"http://app.netbird.cloud:8090": true,
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
