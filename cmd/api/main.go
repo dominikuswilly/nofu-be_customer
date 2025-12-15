@@ -94,6 +94,7 @@ func main() {
 	// Router
 	r := mux.NewRouter()
 	r.Use(middleware.Logging)
+	r.Use(middleware.CORSMiddleware) // Add CORS middleware
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.JSONResponse)
