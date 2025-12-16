@@ -18,6 +18,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 
 		// If origin is allowed, set CORS headers
 		if allowedOrigins[origin] {
+			log.Printf("✅ Allowed origin: %s", origin)
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
