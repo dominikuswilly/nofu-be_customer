@@ -96,6 +96,11 @@ func main() {
 	r.Use(middleware.Logging)
 	r.Use(middleware.CORSMiddleware) // Add CORS middleware
 
+	// Global OPTIONS handler to ensure CORS middleware intercepts preflight requests
+	r.Methods(http.MethodOptions).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.JSONResponse)
 

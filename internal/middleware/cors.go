@@ -12,6 +12,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 	allowedOrigins := map[string]bool{
 		"http://localhost:8080":          true,
 		"http://localhost:3000":          true,
+		"http://100.80.129.244:8080":     true,
 		"https://app.netbird.cloud:8090": true,
 		"http://app.netbird.cloud:8090":  true,
 		// Add this for your request's origin
@@ -60,7 +61,13 @@ func CORSMiddleware(next http.Handler) http.Handler {
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, ...")
+			if !isAllowed && origin != "" {
+				http.Error(w, `{"error": "CORS origin not allowed"}`, http.StatusForbidden)
+			} else {
+				w.WriteHeader(http.StatusOK)
+			}
 			return
 		}
 
