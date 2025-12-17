@@ -19,8 +19,7 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		"http://app.netbird.cloud:8080":  true,
 		"https://app.netbird.cloud:8080": true,
 		// Or for flexibility: allow any *.netbird.cloud (but restrict in prod)
-		"http://*.netbird.cloud":   true, // Use a custom checker for this
-		"https://*.ngrok-free.app": true,
+		"http://100.80.201.235": true,
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
