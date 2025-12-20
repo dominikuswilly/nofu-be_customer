@@ -101,7 +101,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	api := r.PathPrefix("/api").Subrouter()
+	api := r.PathPrefix("/api/customer").Subrouter()
 	api.Use(middleware.JSONResponse)
 
 	// Health check endpoint
