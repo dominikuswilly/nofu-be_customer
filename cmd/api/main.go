@@ -104,6 +104,13 @@ func main() {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.JSONResponse)
 
+	// Health check endpoint
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"status":"ok","timestamp":"%s"}`, time.Now().Format(time.RFC3339))
+	}).Methods(http.MethodGet)
+
 	// Dependency injection
 	merchantRepo := repository.NewMerchantRepoPG(db)
 	adminRepo := repository.NewAdminRepoPG(db)
