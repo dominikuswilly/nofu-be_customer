@@ -10,7 +10,7 @@ import (
 // NewMerchantHandler registers merchant routes under /api
 func NewMerchantHandler(r *mux.Router, u *usecase.MerchantUsecase) {
 	handler := &MerchantHandler{usecase: u}
-	api := r.PathPrefix("/api").Subrouter()
+	api := r.PathPrefix("/api/customer").Subrouter()
 
 	api.HandleFunc("/merchants", handler.Create).Methods(http.MethodPost)
 	api.HandleFunc("/merchants", handler.GetAll).Methods(http.MethodGet)
