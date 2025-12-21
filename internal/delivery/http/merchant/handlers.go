@@ -219,7 +219,15 @@ func (h *MerchantHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expiresAt := time.Now().Add(1 * time.Hour)
+
+	// Get issuer from environment or use default
+	issuer := os.Getenv("JWT_ISSUER")
+	if issuer == "" {
+		issuer = "nofu-customer-api"
+	}
+
 	claims := jwt.MapClaims{
+		"iss":      issuer,
 		"sub":      merchant.C_ID,
 		"username": merchant.C_USERNAME,
 		"exp":      expiresAt.Unix(),
