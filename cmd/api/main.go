@@ -18,6 +18,7 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 
 	handlerAdmin "be_customer/internal/delivery/http"
+	handlerAuth "be_customer/internal/delivery/http/auth"
 	handlerMerchant "be_customer/internal/delivery/http/merchant"
 	"be_customer/internal/repository"
 	"be_customer/internal/usecase"
@@ -120,7 +121,7 @@ func main() {
 	// HTTP handlers
 	handlerMerchant.NewMerchantHandler(r, merchantUc)
 	handlerAdmin.NewAdminHandler(r, adminUc)
-	handlerAdmin.NewAuthHandler(r)
+	handlerAuth.NewAuthHandler(r)
 
 	port := os.Getenv("SERVER_PORT")
 	log.Println("🚀 Server running on port", port)
