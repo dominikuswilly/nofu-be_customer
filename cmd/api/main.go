@@ -120,6 +120,7 @@ func main() {
 	// HTTP handlers
 	handlerMerchant.NewMerchantHandler(r, merchantUc)
 	handlerAdmin.NewAdminHandler(r, adminUc)
+	handlerAdmin.NewAuthHandler(r)
 
 	port := os.Getenv("SERVER_PORT")
 	log.Println("🚀 Server running on port", port)

@@ -14,6 +14,41 @@ type contextKey string
 
 const ContextUserKey contextKey = "user"
 
+func ValidateToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, nil, fmt.Errorf("server misconfiguration: JWT_SECRET not set")
+	}
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		// Verify issuer if set in environment
+		expectedIssuer := os.Getenv("JWT_ISSUER")
+		if expectedIssuer == "" {
+			expectedIssuer = "nofu-customer-api" // Default used in handlers.go
+		}
+
+		if iss, ok := claims["iss"].(string); ok {
+			if iss != expectedIssuer {
+				return nil, nil, fmt.Errorf("invalid token issuer")
+			}
+		}
+		return token, claims, nil
+	}
+
+	return nil, nil, fmt.Errorf("invalid token claims")
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -29,44 +64,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		tokenString := bearerToken[1]
-		jwtSecret := os.Getenv("JWT_SECRET")
-		if jwtSecret == "" {
-			// In production, this should probably panic or log a severe error
-			http.Error(w, "Server misconfiguration", http.StatusInternalServerError)
-			return
-		}
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(jwtSecret), nil
-		})
-
+		_, claims, err := ValidateToken(tokenString)
 		if err != nil {
-			http.Error(w, "Invalid token: "+err.Error(), http.StatusUnauthorized)
+			statusCode := http.StatusUnauthorized
+			if strings.Contains(err.Error(), "server misconfiguration") {
+				statusCode = http.StatusInternalServerError
+			}
+			http.Error(w, "Invalid token: "+err.Error(), statusCode)
 			return
 		}
 
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// Verify issuer if set in environment
-			expectedIssuer := os.Getenv("JWT_ISSUER")
-			if expectedIssuer == "" {
-				expectedIssuer = "nofu-customer-api" // Default used in handlers.go
-			}
-
-			if iss, ok := claims["iss"].(string); ok {
-				if iss != expectedIssuer {
-					http.Error(w, "Invalid token issuer", http.StatusUnauthorized)
-					return
-				}
-			}
-
-			// Add claims to context
-			ctx := context.WithValue(r.Context(), ContextUserKey, claims)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		} else {
-			http.Error(w, "Invalid token claims", http.StatusUnauthorized)
-		}
+		// Add claims to context
+		ctx := context.WithValue(r.Context(), ContextUserKey, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
