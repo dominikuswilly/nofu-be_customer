@@ -13,7 +13,7 @@ type AuthHandler struct{}
 
 func NewAuthHandler(r *mux.Router) {
 	handler := &AuthHandler{}
-	api := r.PathPrefix("/api/auth").Subrouter()
+	api := r.PathPrefix("/api/customer/auth").Subrouter()
 	api.HandleFunc("/validate", handler.Validate).Methods(http.MethodPost)
 }
 
