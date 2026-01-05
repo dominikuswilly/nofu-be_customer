@@ -17,7 +17,7 @@ import (
 	"github.com/joho/godotenv"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 
-	handlerAdmin "be_customer/internal/delivery/http"
+	handlerAdmin "be_customer/internal/delivery/http/admin"
 	handlerAuth "be_customer/internal/delivery/http/auth"
 	handlerMerchant "be_customer/internal/delivery/http/merchant"
 	"be_customer/internal/repository"
