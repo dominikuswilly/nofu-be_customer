@@ -65,6 +65,7 @@ func (h *MerchantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		C_EMAIL:    &req.Email,
 		C_USERNAME: req.Username,
 		C_PASSWORD: string(hashed),
+		I_ACTIVE:   1, // default to active on creation
 	}
 
 	if err := h.usecase.Create(&merchant); err != nil {
@@ -79,6 +80,7 @@ func (h *MerchantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Phone:    derefString(merchant.C_PHONE),
 		Email:    derefString(merchant.C_EMAIL),
 		Username: merchant.C_USERNAME,
+		Active:   merchant.I_ACTIVE == 1,
 	}
 
 	writeJSON(w, http.StatusOK, apiResp{
@@ -104,6 +106,7 @@ func (h *MerchantHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			Phone:    derefString(m.C_PHONE),
 			Email:    derefString(m.C_EMAIL),
 			Username: m.C_USERNAME,
+			Active:   m.I_ACTIVE == 1,
 		})
 	}
 
@@ -129,6 +132,7 @@ func (h *MerchantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		Phone:    derefString(merchant.C_PHONE),
 		Email:    derefString(merchant.C_EMAIL),
 		Username: merchant.C_USERNAME,
+		Active:   merchant.I_ACTIVE == 1,
 	}
 
 	writeJSON(w, http.StatusOK, apiResp{
@@ -142,12 +146,21 @@ func (h *MerchantHandler) Update(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	id := mux.Vars(r)["id"]
 
-	var merchant domain.Merchant
-	if err := json.NewDecoder(r.Body).Decode(&merchant); err != nil {
+	var reqBody struct {
+		domain.Merchant
+		Active bool `json:"active"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
+	merchant := reqBody.Merchant
 	merchant.C_ID = id
+	if reqBody.Active {
+		merchant.I_ACTIVE = 1
+	} else {
+		merchant.I_ACTIVE = 0
+	}
 
 	if err := h.usecase.Update(&merchant); err != nil {
 		// map the domain/usecase error appropriately
@@ -155,6 +168,9 @@ func (h *MerchantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update the domain object for the response to reflect the boolean mapping if needed,
+	// though we are returning the merchant struct directly here.
+	// Actually, the merchant struct has I_ACTIVE now.
 	writeJSON(w, http.StatusOK, apiResp{
 		ResponseCode:    "200",
 		ResponseMessage: "success",

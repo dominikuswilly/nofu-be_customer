@@ -29,6 +29,7 @@ type itemMerchant struct {
 	Phone    string `json:"phone,omitempty"`
 	Email    string `json:"email,omitempty"`
 	Username string `json:"username,omitempty"`
+	Active   bool   `json:"active"`
 }
 
 type itemDetailMerchant struct {
@@ -37,4 +38,5 @@ type itemDetailMerchant struct {
 	Phone    string `json:"phone,omitempty"`
 	Email    string `json:"email,omitempty"`
 	Username string `json:"username,omitempty"`
+	Active   bool   `json:"active"`
 }

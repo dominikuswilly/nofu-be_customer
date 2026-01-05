@@ -7,6 +7,7 @@ type Merchant struct {
 	C_EMAIL    *string `json:"email"`
 	C_PASSWORD string  `json:"password"`
 	C_USERNAME string  `json:"username"`
+	I_ACTIVE   int     `json:"i_active"`
 }
 
 type MerchantRepository interface {
