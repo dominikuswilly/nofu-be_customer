@@ -40,3 +40,28 @@ type itemDetailMerchant struct {
 	Username string `json:"username,omitempty"`
 	Active   bool   `json:"active"`
 }
+
+type stockData struct {
+	MerchantId string `json:"merchantId"`
+	GivenBy    string `json:"givenBy"`
+	CreatedBy  string `json:"createdBy"`
+	CreatedAt  string `json:"createdAt"`
+}
+
+type transactionStockResp struct {
+	ResponseCode    string      `json:"responseCode"`
+	ResponseMessage string      `json:"responseMessage"`
+	Data            []stockData `json:"data"`
+}
+
+type itemMerchantStock struct {
+	ID     string      `json:"id"`
+	Name   string      `json:"name"`
+	Stocks []stockInfo `json:"stocks"`
+}
+
+type stockInfo struct {
+	GivenBy   string `json:"givenBy"`
+	CreatedBy string `json:"createdBy"`
+	CreatedAt string `json:"createdAt"`
+}

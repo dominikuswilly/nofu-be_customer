@@ -270,3 +270,66 @@ func (h *MerchantHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Data:            userData,
 	})
 }
+
+func (h *MerchantHandler) GetMerchantsStock(w http.ResponseWriter, r *http.Request) {
+	merchants, err := h.usecase.GetAll()
+	if err != nil {
+		log.Printf("GetMerchantsStock usecase error: %v", err)
+		writeError(w, http.StatusInternalServerError, "failed to fetch merchants")
+		return
+	}
+
+	// Fetch stock data from transaction API
+	transactionAPI := os.Getenv("TRANSACTION_API_URL")
+	if transactionAPI == "" {
+		// fallback to a default if not set, or handle error
+		transactionAPI = "https://apinofudev.bengkelfajarjaya.com/api/transaction" // Example default
+	}
+
+	stockURL := fmt.Sprintf("%s/internal/stock?time=today", transactionAPI)
+	log.Printf("stockURL: %s", stockURL)
+	resp, err := http.Get(stockURL)
+	var stocks []stockData
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == http.StatusOK {
+			var stockResp transactionStockResp
+			if err := json.NewDecoder(resp.Body).Decode(&stockResp); err == nil {
+				stocks = stockResp.Data
+			}
+		}
+	} else {
+		log.Printf("Error calling transaction API: %v", err)
+	}
+	log.Printf("response transaction stock: %s", stocks)
+
+	// Map stocks by merchant ID for easier merging
+	stockMap := make(map[string][]stockInfo)
+	for _, s := range stocks {
+		stockMap[s.MerchantId] = append(stockMap[s.MerchantId], stockInfo{
+			GivenBy:   s.GivenBy,
+			CreatedBy: s.CreatedBy,
+			CreatedAt: s.CreatedAt,
+		})
+	}
+
+	// Merge data
+	result := make([]itemMerchantStock, 0, len(merchants))
+	for _, m := range merchants {
+		merchantStocks := stockMap[m.C_ID]
+		if merchantStocks == nil {
+			merchantStocks = []stockInfo{} // Ensure it's an empty array, not null
+		}
+		result = append(result, itemMerchantStock{
+			ID:     m.C_ID,
+			Name:   m.C_NM,
+			Stocks: merchantStocks,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, apiResp{
+		ResponseCode:    "200",
+		ResponseMessage: "success",
+		Data:            result,
+	})
+}

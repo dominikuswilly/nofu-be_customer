@@ -27,12 +27,24 @@ func NewAdminHandler(r *mux.Router, u *usecase.AdminUsecase) {
 	// Create a subrouter with prefix "/api"
 	api := r.PathPrefix("/api/customer").Subrouter()
 
+	// Frontend routes
+	frontend := api.PathPrefix("/frontend").Subrouter()
+
+	// Legacy routes
 	api.HandleFunc("/admins/login", handler.Login).Methods(http.MethodPost, http.MethodOptions)
 	api.HandleFunc("/admins", handler.Create).Methods("POST")
 	api.HandleFunc("/admins", handler.GetAll).Methods("GET")
 	api.HandleFunc("/admins/{id}", handler.GetByID).Methods("GET")
 	api.HandleFunc("/admins/{id}", handler.Update).Methods("PUT")
 	api.HandleFunc("/admins/{id}", handler.Delete).Methods("DELETE")
+
+	// Frontend routes
+	frontend.HandleFunc("/admins/login", handler.Login).Methods(http.MethodPost, http.MethodOptions)
+	frontend.HandleFunc("/admins", handler.Create).Methods("POST")
+	frontend.HandleFunc("/admins", handler.GetAll).Methods("GET")
+	frontend.HandleFunc("/admins/{id}", handler.GetByID).Methods("GET")
+	frontend.HandleFunc("/admins/{id}", handler.Update).Methods("PUT")
+	frontend.HandleFunc("/admins/{id}", handler.Delete).Methods("DELETE")
 }
 
 func (h *AdminHandler) Create(w http.ResponseWriter, r *http.Request) {
