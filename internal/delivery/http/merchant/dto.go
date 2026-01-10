@@ -46,6 +46,7 @@ type stockData struct {
 	GivenBy    string `json:"givenBy"`
 	CreatedBy  string `json:"createdBy"`
 	CreatedAt  string `json:"createdAt"`
+	Status     string `json:"status"`
 }
 
 type transactionStockResp struct {
@@ -64,4 +65,5 @@ type stockInfo struct {
 	GivenBy   string `json:"givenBy"`
 	CreatedBy string `json:"createdBy"`
 	CreatedAt string `json:"createdAt"`
+	Status    string `json:"status"`
 }

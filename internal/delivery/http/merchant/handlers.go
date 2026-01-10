@@ -310,6 +310,7 @@ func (h *MerchantHandler) GetMerchantsStock(w http.ResponseWriter, r *http.Reque
 			GivenBy:   s.GivenBy,
 			CreatedBy: s.CreatedBy,
 			CreatedAt: s.CreatedAt,
+			Status:    s.Status,
 		})
 	}
 
