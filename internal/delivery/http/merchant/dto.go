@@ -42,6 +42,7 @@ type itemDetailMerchant struct {
 }
 
 type stockData struct {
+	ID         string `json:"id"`
 	MerchantId string `json:"merchantId"`
 	GivenBy    string `json:"givenBy"`
 	CreatedBy  string `json:"createdBy"`
@@ -62,6 +63,7 @@ type itemMerchantStock struct {
 }
 
 type stockInfo struct {
+	ID        string `json:"id"`
 	GivenBy   string `json:"givenBy"`
 	CreatedBy string `json:"createdBy"`
 	CreatedAt string `json:"createdAt"`

@@ -307,6 +307,7 @@ func (h *MerchantHandler) GetMerchantsStock(w http.ResponseWriter, r *http.Reque
 	stockMap := make(map[string][]stockInfo)
 	for _, s := range stocks {
 		stockMap[s.MerchantId] = append(stockMap[s.MerchantId], stockInfo{
+			ID:        s.ID,
 			GivenBy:   s.GivenBy,
 			CreatedBy: s.CreatedBy,
 			CreatedAt: s.CreatedAt,
