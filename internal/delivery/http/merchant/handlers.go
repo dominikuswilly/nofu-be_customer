@@ -208,6 +208,11 @@ func (h *MerchantHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if merchant.I_ACTIVE == 0 {
+		writeError(w, http.StatusUnauthorized, "user is inactive")
+		return
+	}
+
 	if merchant.C_PASSWORD == "" {
 		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
